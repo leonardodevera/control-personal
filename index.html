@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Control de Personal</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#f5f7fb;color:#172033}.app{max-width:700px;margin:auto;padding:22px 16px 95px}h1{margin:0;font-size:27px}.muted{color:#667085;font-size:13px}.month{margin:18px 0 12px;background:#fff;border:1px solid #e5e7eb;border-radius:16px;padding:12px;display:flex;align-items:center;justify-content:space-between}.month button{width:40px;height:40px;border:0;border-radius:11px;background:#eef2ff;color:#245eea;font-size:22px}.date{background:#2563eb;color:white;border-radius:18px;padding:17px;margin-bottom:14px}.date h2{font-size:19px;margin:3px 0 13px}.quick{display:flex;gap:8px}.quick button{border:0;border-radius:10px;padding:10px;background:white;color:#1746a2;font-weight:700}.employee{background:white;border:1px solid #e4e7ec;border-radius:16px;padding:14px;margin:10px 0}.top{display:flex;align-items:center;justify-content:space-between}.name{font-weight:750}.badge{font-size:12px;background:#f2f4f7;padding:6px 9px;border-radius:999px}.states{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:12px}.states button{padding:10px 3px;border:1px solid #e4e7ec;border-radius:10px;background:#fff;font-size:12px}.states button.on{background:#172033;color:white;font-weight:700}.summary{display:none}.sum{background:#fff;border:1px solid #e4e7ec;border-radius:15px;padding:14px;margin:10px 0}.row{display:flex;justify-content:space-between;padding:5px 0}.people{display:none}nav{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid #ddd;display:grid;grid-template-columns:repeat(3,1fr);padding-bottom:env(safe-area-inset-bottom)}nav button{border:0;background:white;padding:16px 4px;font-weight:700;color:#667085}nav button.active{color:#2563eb}
+</style></head><body><div class="app">
+<h1>Control de Personal</h1><div class="muted">Registro diario de asistencia</div>
+<div class="month"><button onclick="moveMonth(-1)">‹</button><strong id="month"></strong><button onclick="moveMonth(1)">›</button></div>
+<section id="today"><div class="date"><div style="opacity:.8;font-size:12px">Día seleccionado</div><h2 id="dateText"></h2><div class="quick"><button onclick="allWork()">✓ Todos trabajaron</button><button onclick="clearDay()">Limpiar</button></div></div><div id="list"></div></section>
+<section id="people" class="people"><h2>Personal</h2><div id="peopleList"></div></section>
+<section id="summary" class="summary"><h2>Resumen mensual</h2><div id="summaryList"></div></section>
+</div><nav><button id="nToday" class="active" onclick="tab('today')">Hoy</button><button id="nPeople" onclick="tab('people')">Personal</button><button id="nSummary" onclick="tab('summary')">Resumen</button></nav>
+<script>
+const staff=['Ana Torres','Carlos Mendoza','María López','José Ramírez','Paola Vera','Luis Cedeño','Daniela Ruiz','Miguel Zambrano'];
+const states=['Trabajó','Libre','Falta','Permiso','Vacaciones','Enfermedad'];
+let data=JSON.parse(localStorage.getItem('cp-data')||'{}');let selected=new Date();
+function key(){return selected.getFullYear()+'-'+String(selected.getMonth()+1).padStart(2,'0')+'-'+String(selected.getDate()).padStart(2,'0')}
+function save(){localStorage.setItem('cp-data',JSON.stringify(data))}
+function mark(n,s){data[key()]??={};data[key()][n]=s;save();render()}
+function allWork(){data[key()]={};staff.forEach(n=>data[key()][n]='Trabajó');save();render()}
+function clearDay(){delete data[key()];save();render()}
+function moveMonth(d){selected.setMonth(selected.getMonth()+d);selected.setDate(1);render()}
+function render(){let opts={weekday:'long',day:'numeric',month:'long',year:'numeric'};document.getElementById('dateText').textContent=selected.toLocaleDateString('es-EC',opts);document.getElementById('month').textContent=selected.toLocaleDateString('es-EC',{month:'long',year:'numeric'}).replace(/^./,c=>c.toUpperCase());let rec=data[key()]||{};document.getElementById('list').innerHTML=staff.map(n=>`<div class="employee"><div class="top"><div class="name">${n}</div><span class="badge">${rec[n]||'Sin marcar'}</span></div><div class="states">${states.map(s=>`<button class="${rec[n]===s?'on':''}" onclick="mark('${n}','${s}')">${s}</button>`).join('')}</div></div>`).join('');document.getElementById('peopleList').innerHTML=staff.map(n=>`<div class="employee"><div class="name">${n}</div><div class="muted">Personal activo</div></div>`).join('');renderSummary()}
+function renderSummary(){document.getElementById('summaryList').innerHTML=staff.map(n=>{let c={};Object.entries(data).forEach(([k,v])=>{let dt=new Date(k+'T12:00:00');if(dt.getMonth()===selected.getMonth()&&dt.getFullYear()===selected.getFullYear()&&v[n])c[v[n]]=(c[v[n]]||0)+1});return `<div class="sum"><div class="name">${n}</div>${states.map(s=>`<div class="row"><span>${s}</span><b>${c[s]||0}</b></div>`).join('')}</div>`}).join('')}
+function tab(t){['today','people','summary'].forEach(x=>document.getElementById(x).style.display=x===t?'block':'none');['Today','People','Summary'].forEach(x=>document.getElementById('n'+x).classList.remove('active'));document.getElementById('n'+t[0].toUpperCase()+t.slice(1)).classList.add('active');if(t==='summary')renderSummary()}
+render();
+</script></body></html>
