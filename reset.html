@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Reiniciar Control de Personal</title>
 <style>
-body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#f5f7fb;color:#172033;display:flex;min-height:100vh;align-items:center;justify-content:center;padding:20px}.card{width:100%;max-width:390px;background:#fff;border:1px solid #e4e7ec;border-radius:18px;padding:22px}.card h1{margin:0 0 8px}.card p{color:#667085;font-size:13px}.card input{width:100%;box-sizing:border-box;padding:12px;border:1px solid #d0d5dd;border-radius:10px;margin:6px 0}.card button{width:100%;border:0;border-radius:10px;padding:12px;margin-top:12px;background:#b42318;color:#fff;font-weight:800}.msg{margin-top:12px;font-size:13px;text-align:center}.ok{color:#067647}.bad{color:#b42318}
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#f5f7fb;color:#172033;display:flex;min-height:100vh;align-items:center;justify-content:center;padding:20px}.card{width:100%;max-width:390px;background:#fff;border:1px solid #e4e7ec;border-radius:18px;padding:22px}.card h1{margin:0 0 8px}.card p{color:#667085;font-size:13px}.card input{width:100%;box-sizing:border-box;padding:12px;border:1px solid #d0d5dd;border-radius:10px;margin:6px 0}.card button{width:100%;border:0;border-radius:10px;padding:12px;margin-top:12px;background:#b42318;color:#fff;font-weight:800}.msg{margin-top:12px;font-size:13px;text-align:center;white-space:pre-wrap;word-break:break-word}.ok{color:#067647}.bad{color:#b42318}
 </style>
 </head>
 <body>
@@ -32,9 +32,14 @@ async function resetData(){
   if(!confirm('¿Confirmas que quieres borrar TODOS los datos de prueba?\n\nEl usuario de acceso se conservará.'))return;
   btn.disabled=true;msg.className='msg';msg.textContent='Reiniciando...';
   const {data,error}=await db.auth.signInWithPassword({email,password});
-  if(error||!data.user){msg.className='msg bad';msg.textContent='Correo o contraseña incorrectos.';btn.disabled=false;return}
+  if(error||!data.user){msg.className='msg bad';msg.textContent='Correo o contraseña incorrectos.\n'+(error?.message||'');btn.disabled=false;return}
   const {error:saveError}=await db.from('app_state').upsert({user_id:data.user.id,data:emptyState},{onConflict:'user_id'});
-  if(saveError){msg.className='msg bad';msg.textContent='No se pudo reiniciar la nube.';btn.disabled=false;return}
+  if(saveError){
+    msg.className='msg bad';
+    msg.textContent='No se pudo reiniciar la nube.\n\nMensaje: '+(saveError.message||'Sin mensaje')+'\nCódigo: '+(saveError.code||'Sin código')+(saveError.details?'\nDetalle: '+saveError.details:'')+(saveError.hint?'\nSugerencia: '+saveError.hint:'');
+    btn.disabled=false;
+    return
+  }
   localStorage.removeItem('cp-accounts');localStorage.removeItem('cp-current-account');localStorage.removeItem('cp-staff');localStorage.removeItem('cp-temps');localStorage.removeItem('cp-data');localStorage.removeItem('cp-inactive');localStorage.removeItem('cp-cities');localStorage.removeItem('cp-city-history');localStorage.removeItem('cp-notes');
   localStorage.setItem('cp-accounts',JSON.stringify(emptyState.accounts));localStorage.setItem('cp-current-account','main');
   msg.className='msg ok';msg.textContent='Listo. Datos borrados. Abriendo la app...';
