@@ -61,16 +61,25 @@
       [0,1,2,4,6].forEach(c=>merges.push({s:{r:start,c},e:{r:start+3,c}}));
     });
     let ws=XLSX.utils.aoa_to_sheet(data);ws['!merges']=merges;
-    let headerFills=['D9EAF7','D9EAF7','D9EAF7','F4C7A1','9CC2E5','F4C7A1','9CC2E5','C6E0B4','FFE699','BDD7EE','D9EAD3'];
-    for(let c=0;c<headers.length;c++){let a=XLSX.utils.encode_cell({r:0,c});ws[a].s=cellStyle(headerFills[c],'0000FF',true,true)}
+    for(let c=0;c<headers.length;c++){
+      let a=XLSX.utils.encode_cell({r:0,c});
+      ws[a].s=cellStyle('F4C7A1','0000FF',true,true);
+    }
     for(let r=1;r<data.length;r++)for(let c=0;c<headers.length;c++){
       let a=XLSX.utils.encode_cell({r,c});if(!ws[a])ws[a]={t:'s',v:''};
-      let fill='FFFFFF';if(c===3||c===5)fill='FCE4D6';else if(c===4||c===6)fill='DDEBF7';else if(c===7)fill='E2F0D9';else if(c===8)fill='FFF2CC';else if(c===9)fill='D9EAF7';else if(c===10)fill='E2F0D9';
-      ws[a].s=cellStyle(fill,'000000',false,c!==10);
+      let fill='FFFFFF';
+      if(c===3||c===5)fill='FCE4D6';
+      else if(c===4||c===6)fill='DDEBF7';
+      else if(c===7)fill='E2F0D9';
+      else if(c===8)fill='FFF2CC';
+      else if(c===9)fill='D9EAF7';
+      else if(c===10)fill='E2F0D9';
+      let bold=c===3||c===5||c===9;
+      ws[a].s=cellStyle(fill,'000000',bold,c!==10);
       if(c>=7&&c<=9&&typeof ws[a].v==='number')ws[a].z='$0.00';
     }
     ws['!cols']=[{wch:14},{wch:15},{wch:15},{wch:22},{wch:18},{wch:18},{wch:30},{wch:15},{wch:18},{wch:18},{wch:38}];
-    ws['!rows']=[{hpt:34},...Array.from({length:data.length-1},()=>({hpt:24}))];
+    ws['!rows']=[{hpt:36},...Array.from({length:data.length-1},()=>({hpt:24}))];
     ws['!freeze']={xSplit:0,ySplit:1,topLeftCell:'A2',activePane:'bottomLeft',state:'frozen'};
     let wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'LOGISTICA '+month);
     XLSX.writeFile(wb,'Logistica_'+month+'.xlsx');
