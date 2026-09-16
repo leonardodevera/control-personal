@@ -1,58 +1,26 @@
 (()=>{
   let activeTab='staff';
+  const readEvents=()=>{try{return JSON.parse(localStorage.getItem('cp-events')||'[]')||[]}catch(e){return[]}};
+  const writeEvents=list=>localStorage.setItem('cp-events',JSON.stringify(list));
+  function currentEvent(list){const title=document.querySelector('#eventsModule h2');return list.find(x=>x.name===(title?title.textContent.trim():''));}
   function applyEventEnhancements(){
-    const box=document.getElementById('eventsModule');
-    if(!box)return;
-    const heads=[...box.querySelectorAll('h3')];
-    const staffHead=heads.find(h=>h.textContent.includes('Personal y turnos'));
-    const materialHead=heads.find(h=>h.textContent.includes('Materiales e insumos'));
-    if(!staffHead||!materialHead)return;
-
-    const addBtn=[...materialHead.parentElement.querySelectorAll('button')].find(b=>b.textContent.includes('Agregar al evento'));
-    if(addBtn)addBtn.textContent='+ Agregar insumo';
-
-    const back=[...box.querySelectorAll('button')].find(b=>b.textContent.includes('← Eventos'));
-    const title=box.querySelector('h2');
-    if(back&&title&&!document.getElementById('eventRenameBtn')){
-      const row=document.createElement('div');
-      row.style.cssText='display:flex;align-items:center;justify-content:space-between;gap:10px';
-      title.parentElement.insertBefore(row,title);row.appendChild(title);
-      const edit=document.createElement('button');
-      edit.id='eventRenameBtn';edit.type='button';edit.textContent='✏️ Cambiar nombre';
-      edit.style.cssText='border:1px solid #d0d5dd;background:#fff;border-radius:9px;padding:8px 10px;font-weight:800;font-size:12px;white-space:nowrap';
-      edit.onclick=()=>{
-        const current=title.textContent.trim();
-        const next=prompt('Nuevo nombre del evento:',current);
-        if(next===null)return;
-        const clean=next.trim();if(!clean){alert('El nombre no puede quedar vacío.');return}
-        const raw=localStorage.getItem('cp-events');let list=[];try{list=JSON.parse(raw||'[]')||[]}catch(e){}
-        const ev=list.find(x=>x.name===current);
-        if(!ev){alert('No se pudo identificar el evento.');return}
-        ev.name=clean;localStorage.setItem('cp-events',JSON.stringify(list));title.textContent=clean;
-      };
-      row.appendChild(edit);
+    const box=document.getElementById('eventsModule');if(!box)return;
+    const heads=[...box.querySelectorAll('h3')],staffHead=heads.find(h=>h.textContent.includes('Personal y turnos')),materialHead=heads.find(h=>h.textContent.includes('Materiales e insumos'));if(!staffHead||!materialHead)return;
+    const addBtn=[...materialHead.parentElement.querySelectorAll('button')].find(b=>b.textContent.includes('Agregar al evento'));if(addBtn)addBtn.textContent='+ Agregar insumo';
+    const back=[...box.querySelectorAll('button')].find(b=>b.textContent.includes('← Eventos')),title=box.querySelector('h2');
+    if(back&&title&&!document.getElementById('eventActions')){
+      const row=document.createElement('div');row.style.cssText='display:flex;align-items:flex-start;justify-content:space-between;gap:8px';title.parentElement.insertBefore(row,title);row.appendChild(title);
+      const actions=document.createElement('div');actions.id='eventActions';actions.style.cssText='display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end';
+      const edit=document.createElement('button');edit.type='button';edit.textContent='✏️ Editar';edit.style.cssText='border:1px solid #d0d5dd;background:#fff;border-radius:9px;padding:8px 9px;font-weight:800;font-size:12px';edit.onclick=()=>{let list=readEvents(),ev=currentEvent(list);if(!ev)return alert('No se pudo identificar el evento.');let next=prompt('Nuevo nombre del evento:',ev.name);if(next===null)return;next=next.trim();if(!next)return alert('El nombre no puede quedar vacío.');ev.name=next;writeEvents(list);title.textContent=next};
+      const del=document.createElement('button');del.type='button';del.textContent='🗑️ Eliminar';del.style.cssText='border:1px solid #fecdca;background:#fff;color:#b42318;border-radius:9px;padding:8px 9px;font-weight:800;font-size:12px';del.onclick=()=>{let list=readEvents(),ev=currentEvent(list);if(!ev)return;if(!confirm('¿Seguro que deseas eliminar este evento? Se eliminarán también sus turnos y materiales.'))return;writeEvents(list.filter(x=>x.id!==ev.id));if(typeof window.closeEventDetail==='function')window.closeEventDetail();};actions.append(edit,del);row.appendChild(actions);
     }
-
-    if(document.getElementById('eventDetailTabs'))return;
     const staff=staffHead.parentElement,materials=materialHead.parentElement;
-    const tabs=document.createElement('div');
-    tabs.id='eventDetailTabs';
-    tabs.style.cssText='display:grid;grid-template-columns:1fr 1fr;gap:6px;background:#eef2f7;padding:5px;border-radius:12px;margin-top:18px';
-    tabs.innerHTML='<button id="eventStaffTab" type="button">👥 Personal</button><button id="eventMaterialsTab" type="button">📦 Materiales</button>';
-    staff.parentElement.insertBefore(tabs,staff);
-    [staff,materials].forEach(x=>{x.style.marginTop='12px'});
-    function show(tab){
-      activeTab=tab;staff.style.display=tab==='staff'?'block':'none';materials.style.display=tab==='materials'?'block':'none';
-      const a=document.getElementById('eventStaffTab'),b=document.getElementById('eventMaterialsTab');
-      [a,b].forEach(x=>x.style.cssText='border:0;border-radius:9px;padding:10px 6px;font-weight:850;background:transparent;color:#667085');
-      const on=tab==='staff'?a:b;on.style.background='#2563eb';on.style.color='#fff';
-    }
-    document.getElementById('eventStaffTab').onclick=()=>show('staff');
-    document.getElementById('eventMaterialsTab').onclick=()=>show('materials');
-    show(activeTab);
+    [...staff.querySelectorAll('button')].filter(b=>b.textContent.trim()==='Quitar').forEach((btn,i)=>{if(btn.dataset.enhanced)return;btn.dataset.enhanced='1';btn.textContent='🗑️';const card=btn.parentElement;const edit=document.createElement('button');edit.type='button';edit.textContent='✏️';edit.title='Editar personal';edit.style.cssText='border:0;background:#fff;font-weight:800;margin-left:auto';edit.onclick=ev=>{ev.stopPropagation();let list=readEvents(),event=currentEvent(list);if(!event)return;let visible=[...staff.querySelectorAll('button[data-enhanced="1"]')],idx=visible.indexOf(btn),person=(event.staff||[])[idx];if(!person)return alert('No se pudo identificar el turno.');let name=prompt('Nombre del personal:',person.name||'');if(name===null)return;name=name.trim();if(!name)return alert('El nombre no puede quedar vacío.');let role=prompt('Función: Impulsadora, Logística o Supervisión',person.role||'Impulsadora');if(role===null)return;role=role.trim()||person.role;person.name=name;person.role=role;writeEvents(list);if(typeof window.openEventDetail==='function')window.openEventDetail(event.id);};card.insertBefore(edit,btn);});
+    [...materials.querySelectorAll('button')].filter(b=>b.textContent.trim()==='Quitar').forEach((btn,i)=>{if(btn.dataset.enhanced)return;btn.dataset.enhanced='1';btn.textContent='🗑️';const card=btn.closest('div[style*="border:1px solid"]')||btn.parentElement.parentElement;const edit=document.createElement('button');edit.type='button';edit.textContent='✏️';edit.title='Editar insumo';edit.style.cssText='border:0;background:#fff;font-weight:800;margin-left:auto';edit.onclick=ev=>{ev.stopPropagation();let list=readEvents(),event=currentEvent(list);if(!event)return;let visible=[...materials.querySelectorAll('button[data-enhanced="1"]')],idx=visible.indexOf(btn),item=(event.materials||[])[idx];if(!item)return alert('No se pudo identificar el insumo.');let name=prompt('Nombre del insumo:',item.name||'');if(name===null)return;name=name.trim();if(!name)return alert('El nombre no puede quedar vacío.');item.name=name;writeEvents(list);if(typeof window.openEventDetail==='function')window.openEventDetail(event.id);};btn.parentElement.insertBefore(edit,btn);});
+    if(document.getElementById('eventDetailTabs'))return;
+    const tabs=document.createElement('div');tabs.id='eventDetailTabs';tabs.style.cssText='display:grid;grid-template-columns:1fr 1fr;gap:6px;background:#eef2f7;padding:5px;border-radius:12px;margin-top:18px';tabs.innerHTML='<button id="eventStaffTab" type="button">👥 Personal</button><button id="eventMaterialsTab" type="button">📦 Materiales</button>';staff.parentElement.insertBefore(tabs,staff);[staff,materials].forEach(x=>x.style.marginTop='12px');
+    function show(tab){activeTab=tab;staff.style.display=tab==='staff'?'block':'none';materials.style.display=tab==='materials'?'block':'none';const a=document.getElementById('eventStaffTab'),b=document.getElementById('eventMaterialsTab');[a,b].forEach(x=>x.style.cssText='border:0;border-radius:9px;padding:10px 6px;font-weight:850;background:transparent;color:#667085');const on=tab==='staff'?a:b;on.style.background='#2563eb';on.style.color='#fff'}
+    document.getElementById('eventStaffTab').onclick=()=>show('staff');document.getElementById('eventMaterialsTab').onclick=()=>show('materials');show(activeTab);
   }
-  const old=window.renderEventsHome;
-  if(typeof old==='function')window.renderEventsHome=function(){old.apply(this,arguments);setTimeout(applyEventEnhancements,0)};
-  document.addEventListener('click',()=>setTimeout(applyEventEnhancements,0));
-  setTimeout(applyEventEnhancements,0);
+  const old=window.renderEventsHome;if(typeof old==='function')window.renderEventsHome=function(){old.apply(this,arguments);setTimeout(applyEventEnhancements,0)};document.addEventListener('click',()=>setTimeout(applyEventEnhancements,0));setTimeout(applyEventEnhancements,0);
 })();
