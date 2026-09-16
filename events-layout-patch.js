@@ -1,12 +1,39 @@
 (()=>{
   let activeTab='staff';
-  function applyEventTabs(){
+  function applyEventEnhancements(){
     const box=document.getElementById('eventsModule');
-    if(!box||document.getElementById('eventDetailTabs'))return;
+    if(!box)return;
     const heads=[...box.querySelectorAll('h3')];
     const staffHead=heads.find(h=>h.textContent.includes('Personal y turnos'));
     const materialHead=heads.find(h=>h.textContent.includes('Materiales e insumos'));
     if(!staffHead||!materialHead)return;
+
+    const addBtn=[...materialHead.parentElement.querySelectorAll('button')].find(b=>b.textContent.includes('Agregar al evento'));
+    if(addBtn)addBtn.textContent='+ Agregar insumo';
+
+    const back=[...box.querySelectorAll('button')].find(b=>b.textContent.includes('← Eventos'));
+    const title=box.querySelector('h2');
+    if(back&&title&&!document.getElementById('eventRenameBtn')){
+      const row=document.createElement('div');
+      row.style.cssText='display:flex;align-items:center;justify-content:space-between;gap:10px';
+      title.parentElement.insertBefore(row,title);row.appendChild(title);
+      const edit=document.createElement('button');
+      edit.id='eventRenameBtn';edit.type='button';edit.textContent='✏️ Cambiar nombre';
+      edit.style.cssText='border:1px solid #d0d5dd;background:#fff;border-radius:9px;padding:8px 10px;font-weight:800;font-size:12px;white-space:nowrap';
+      edit.onclick=()=>{
+        const current=title.textContent.trim();
+        const next=prompt('Nuevo nombre del evento:',current);
+        if(next===null)return;
+        const clean=next.trim();if(!clean){alert('El nombre no puede quedar vacío.');return}
+        const raw=localStorage.getItem('cp-events');let list=[];try{list=JSON.parse(raw||'[]')||[]}catch(e){}
+        const ev=list.find(x=>x.name===current);
+        if(!ev){alert('No se pudo identificar el evento.');return}
+        ev.name=clean;localStorage.setItem('cp-events',JSON.stringify(list));title.textContent=clean;
+      };
+      row.appendChild(edit);
+    }
+
+    if(document.getElementById('eventDetailTabs'))return;
     const staff=staffHead.parentElement,materials=materialHead.parentElement;
     const tabs=document.createElement('div');
     tabs.id='eventDetailTabs';
@@ -25,7 +52,7 @@
     show(activeTab);
   }
   const old=window.renderEventsHome;
-  if(typeof old==='function')window.renderEventsHome=function(){old.apply(this,arguments);setTimeout(applyEventTabs,0)};
-  document.addEventListener('click',()=>setTimeout(applyEventTabs,0));
-  setTimeout(applyEventTabs,0);
+  if(typeof old==='function')window.renderEventsHome=function(){old.apply(this,arguments);setTimeout(applyEventEnhancements,0)};
+  document.addEventListener('click',()=>setTimeout(applyEventEnhancements,0));
+  setTimeout(applyEventEnhancements,0);
 })();
