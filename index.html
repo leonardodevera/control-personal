@@ -9,7 +9,7 @@
 <script>
 (async()=>{
   try{
-    let html=await fetch('./app.html?v=prod-20260904',{cache:'no-store'}).then(r=>{if(!r.ok)throw new Error('No se pudo cargar la app');return r.text()});
+    let html=await fetch('./app.html?v=prod-20260904').then(r=>{if(!r.ok)throw new Error('No se pudo cargar la app');return r.text()});
     html=html
       .replace('.demoBtn{background:#f4f3ff!important;color:#6941c6!important}','')
       .replace('<button class="addbtn demoBtn" onclick="loadFullDemo(true)">Demo completo</button>','')
